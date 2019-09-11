@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>KODEMARI GOURMET RUN !!</title>
+  <meta name="description" content="はらぺこコデマリが食べ物を食べつくすゲームです">
+  <meta name=”author” content=”レモン工房と開発室”>
+
+
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <style>
+  * {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    background-color: black;
+  }
+  canvas {
+    margin: 0 auto;
+  }
+  </style>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.19.0/phaser.min.js"></script>
+<!--
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <script src="https://pixijs.download/v5.1.1/pixi.min.js"></script>
+<script src="js/phaser.min.js"></script>
+-->
+
+<script src="js/preloader.js"></script>
+<script src="js/title.js"></script>
+<script src="js/mainscene.js"></script>
+
+
+<body>
+    <script>
+    let cell = {s: 32, xLen: 20, yLen: 12};
+    let environment = {seek: 1};
+//    let game = {w: cell.s * cell.xLen, h: cell.s * cell.yLen};
+
+    let config = {
+        type: Phaser.AUTO,
+        gameTitle: "SUPER KODEMARI GOURMET RUN !!",
+        gameURL: "https://lemonkobo.com/g/kodemari-run/",
+        width: cell.s * cell.xLen,      // 概ね640
+        height: cell.s * cell.yLen,     // 差し詰め384
+        scale: {
+            mode: Phaser.Scale.FIT,
+            autoCenter: Phaser.Scale.CENTER_BOTH
+        },
+        antialias: false,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 1500 },
+                debug: false
+            }
+        },
+        /*
+        pack: {
+            files: [
+                { type: 'scenePlugin', key: 'SpinePlugin', url: 'plugins/SpinePlugin.js', sceneKey: 'spine' }
+            ]
+        },
+        */
+        plugins: {
+          scene: [
+            { key: 'SpinePlugin', plugin: window.SpinePlugin, mapping: 'spine' }
+          ]
+        },
+//        plugins: { scene: [ { key: 'SpineWebGLPlugin', plugin: SpineWebGLPlugin, start: true, sceneKey: 'spine' } ] },
+        scene: [ Preloader, Title, MainScene ]
+    };
+
+    let game = new Phaser.Game(config);
+
+
+    console.log(game.config);
+    </script>
+    <!--
+  <div id='canvas-renderer'>
+    <canvas id='maingame'></canvas>
+  </div>
+-->
+</body>
+</html>
