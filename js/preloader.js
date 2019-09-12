@@ -28,6 +28,8 @@ var Preloader = new Phaser.Class({
         this.load.audio('se-itemget', 'pikon.wav');
         this.load.audio('se-damage', 'nyu1.wav');
         this.load.audio('se-enter', 'piron3.wav');
+        this.load.audio('se-countdown', 'choin.wav');
+        this.load.audio('se-whistle', 'whistle.wav');
         this.load.audio('bgm-1', 'bgm-12.ogg');
         this.load.audio('bgm-2', 'bgm-2.ogg');
 
@@ -64,6 +66,8 @@ var Preloader = new Phaser.Class({
         this.load.spritesheet('UI-hp', 'hp.png', { frameWidth: 64, frameHeight: 64 });
         this.load.bitmapFont('UI-score-font', 'score-font.png', 'score-font.fnt');
 
+        this.load.spritesheet('countdown', 'countdown.png', { frameWidth: 100, frameHeight: 100 });
+        this.load.image('go', 'go.png');
         this.load.spritesheet('foods', 'foods.png', { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('player', 'kodemari-sprite.png', { frameWidth: 78, frameHeight: 96 });
 //        this.load.spritesheet('player', 'player.png', { frameWidth: 48, frameHeight: 80 });
@@ -78,6 +82,11 @@ var Preloader = new Phaser.Class({
     },
     create: function() {
         console.log('preload create')
-        this.scene.start('title');
+        this.time.delayedCall(500, function() {
+            this.cameras.main.fadeOut(300)
+            .on('camerafadeoutcomplete', function() {
+                this.scene.start('title');
+            }, this);
+        }, null, this)
     }
 });

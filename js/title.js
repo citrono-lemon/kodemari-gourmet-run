@@ -12,8 +12,8 @@ var Title = new Phaser.Class({
     create: function() {
         flag = false;
         title = {};
-        this.audio.music.bgm1 = this.sound.add('bgm-1', {volume: 0.2, rate: 1.0, loop: true})
-        this.audio.music.bgm1.play({seek: 2});
+        environment.music.bgm1 = this.sound.add('bgm-1', {volume: 0.2, rate: 1.0, loop: true})
+        environment.music.bgm1.play({seek: environment.seek});
         title.enter = this.sound.add('se-enter');
 //        this.audio.music.bgm1.stop();
         touchField = this.add.sprite(0, 0, "title-bg").setOrigin(0 ,0);
@@ -65,20 +65,22 @@ var Title = new Phaser.Class({
                 title.enter.play();
                 this.cameras.main.fadeOut(300)
                 .on('camerafadeoutcomplete', function() {
-                    environment.seek = this.audio.music.bgm1.seek;
-                    this.audio.music.bgm1.stop();
+                    environment.seek = environment.music.bgm1.seek;
+//                    this.audio.music.bgm1.stop();
                     this.scene.start('mainscene');
                 }, this);
             }, this);
         }, this);
-        /*
+//        this.audio.music.bgm1.stop();
+//        this.scene.start('mainscene');
+/*
         function() {
             touchField.setInteractive().on('pointerdown', function(pointer, localX, localY, event){
                 if (!flag) {
                     flag = true;
                     this.cameras.main.fadeOut(700, 0, 0, 0, function() {
-                        environment.seek = this.audio.music.bgm1.seek;
-                        this.audio.music.bgm1.stop();
+                        environment.seek = environment.music.bgm1.seek;
+                        environment.music.bgm1.stop();
                         this.scene.start('mainscene');
                     });
                 }

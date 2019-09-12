@@ -77,7 +77,7 @@ var MainScene = new Phaser.Class({
         this.player = this.physics.add.sprite(80, 250, 'player',0).setScale(1);
         this.player.speed = 300;
         this.player.lastSector = 0;
-        this.environment = {time: 0, score: 0, gameSpeed: 1.0, speedUpFlag: 0};
+        this.environment = {time: 0, score: 0, gameSpeed: 1.0, speedUpFlag: 0, startFlag: false, order: 0};
         console.log(this.environment)
 
 //        this.spineboy = this.add.spine(150, 250, 'kodemari', 'Run');
@@ -133,15 +133,17 @@ var MainScene = new Phaser.Class({
         this.audio.jump2 = this.sound.add('se-jump2');
         this.audio.itemget = this.sound.add('se-itemget');
         this.audio.damage = this.sound.add('se-damage');
-        this.audio.music.bgm2 = this.sound.add('bgm-2', {volume: 0.2, rate: 1.0, loop: true})
-        console.log(this.audio.music.bgm2)
+        this.audio.countdown = this.sound.add('se-countdown')
+        this.audio.whistle = this.sound.add('se-whistle');
+        environment.music.bgm2 = this.sound.add('bgm-2', {volume: 0.2, rate: 1.0, loop: true})
+        console.log(environment.music.bgm2)
         console.log(this.audio.music.seek);
-        this.audio.music.bgm2.play({seek: environment.seek})
+//        this.audio.music.bgm2.play({seek: environment.seek})
 
 
         // マップを作るんだ～（1回目）
-        this.generateField(this.info.order++);
-        this.generateField(this.info.order++);
+        this.generateField(this.environment.order++);
+        this.generateField(this.environment.order++);
 
         //
         // 子リジョン
@@ -281,16 +283,98 @@ var MainScene = new Phaser.Class({
         this.objs.enemy.slag.group.create
 
         console.log(50000 * (1.0 + 0.1 * this.environment.gameSpeed - 0.9));
+        /*
+        scene.time.addEvent({
+            delay: 500,                // ms
+            callback: function(thisArg) {
+                console.log(thisArg);
+            },
+            //args: [],
+            callbackScope: thisArg,
+            repeat: 4
+        });
+*/
+        this.ui.countdown = [];
+        for (i = 0; i < 3; i++) {
+            this.ui.countdown[i] = this.add.sprite(330, 180, "countdown", i).setAlpha(0).setScrollFactor(0)
+        }
+        this.ui.countgo = this.add.sprite(330, 180, 'go').setAlpha(0).setScrollFactor(0);
+
+        // カウントダウン（ながい）
+        this.ui.countdownTimer = this.time.addEvent({
+            delay: 600,
+            callback: function() {
+                console.log(this.ui.countdownTimer.getRepeatCount());
+                if (this.ui.countdownTimer.getRepeatCount() > 0) {
+                    this.tweens.timeline({
+                        targets: this.ui.countdown[3-this.ui.countdownTimer.getRepeatCount()],
+                        duration: 400,
+                        loop: 0, 
+                        tweens: [
+                            {scale: 2, alpha: 1, ease: 'Expo.In'},
+                            {scale: 3, alpha: 0, ease: 'Expo.Out'}
+                        ]
+                    });
+                    this.time.delayedCall(200, function() {
+                        this.audio.countdown.play();
+                    }, null, this)                    
+                }
+                else {
+                    // START!!!
+                    this.tweens.timeline({
+                        targets: this.ui.countgo,
+                        duration: 600,
+                        loop: 0, 
+                        
+                        tweens: [
+                            {scale: 2, alpha: 1, rotation: 0.5, ease: 'Expo.In'},
+                            {scale: 3, alpha: 0, rotation: 0.8, ease: 'Expo.Out'}
+                        ]
+                    });
+                    this.time.delayedCall(300, function() {
+                        this.camera.fadeOut(100, 255, 255, 255)
+                        .on('camerafadeoutcomplete', function() {
+                            this.camera.fadeIn(100, 255, 255, 255);
+                        }, this);
+//                        this.camera.flash(300);
+                        this.audio.whistle.play();
+                        environment.seek = environment.music.bgm1.seek;
+                        environment.music.bgm1.stop();
+                        environment.music.bgm2.play({seek: environment.seek});
+                    }, null, this)
+                    this.environment.startFlag = true;
+                }
+            },
+            callbackScope: this,
+            repeat: 3
+        });
+        /*
+        this.tweens.add({
+            targets: res,
+            duration: 600,
+            scale: 3,
+            alpha: 0,
+            ease: 'Cubic.easeOut',
+        });
+        */
     },
 
     update: function() {
         this.ui.score.text = String(this.environment.score).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,')
 //        this.ui.score.text = this.environment.score;
+        if (this.environment.time % 20 == 0) {
+            if (this.environment.startFlag) {
+                this.environment.score += 10;
+                this.environment.speedUpFlag += 10;
+            }
+        }
+/*
         if (this.player.x / (cell.s * 1) > this.player.lastSector ) {
             this.environment.score += 10 * (Math.floor(this.player.x / (cell.s)) - (this.player.lastSector - 1) );
             this.environment.speedUpFlag += 10;
             this.player.lastSector += 1;
         }
+*/
         // x(1 + 0.1p + a) = 5000 + 5000p)
         // x = 50000, a = -0.9
         if (this.environment.speedUpFlag > 5000) {
@@ -312,7 +396,7 @@ var MainScene = new Phaser.Class({
 //        });
 
         if (this.objs.dummy.array[0] < this.camera.scrollX) {
-            this.generateField(this.info.order++);
+            this.generateField(this.environment.order++);
             this.objs.dummy.array.shift();
 //            console.log(this.objs.ground.array[0]);
         }
@@ -357,11 +441,11 @@ var MainScene = new Phaser.Class({
 
         let topLeft = orderNum *  cell.xLen;
         // 最初のオーダーは空だけつくる
-        if (orderNum == 0) {
-            this.objs.dummy.array.push(cell.s * (cell.xLen - 2 + 0.5));
+        if (!this.environment.startFlag) {
+            this.objs.dummy.array.push(cell.s * (topLeft + cell.xLen - 2 + 0.5));
             for (i = 0; i < cell.xLen; i ++) {
-                this.objs.ground.array.push(this.objs.ground.group.create(cell.s * (i + 0.5), cell.s * (cell.yLen - 2 + 0.5), 'ground-top'));
-                this.objs.ground.array.push(this.objs.ground.group.create(cell.s * (i + 0.5), cell.s * (cell.yLen - 1 + 0.5), 'ground'));
+                this.objs.ground.array.push(this.objs.ground.group.create(cell.s * (topLeft + i + 0.5), cell.s * (cell.yLen - 2 + 0.5), 'ground-top'));
+                this.objs.ground.array.push(this.objs.ground.group.create(cell.s * (topLeft + i + 0.5), cell.s * (cell.yLen - 1 + 0.5), 'ground'));
             }
         }
         else {
