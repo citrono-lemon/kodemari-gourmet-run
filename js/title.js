@@ -7,14 +7,17 @@ var Title = new Phaser.Class({
         // BOOT
         this.audio = {music: { }};
 
+        console.log(environment);
         this.canvas = this.sys.game.canvas;
     },
     create: function() {
         flag = false;
         title = {};
-        environment.music.bgm1 = this.sound.add('bgm-1', {volume: 0.2, rate: 1.0, loop: true})
-        environment.music.bgm1.play({seek: environment.seek});
-        title.enter = this.sound.add('se-enter');
+        if (!environment.music.bgm1) {
+            environment.music.bgm1 = this.sound.add('bgm-1', {volume: environment.music.volume, mute: environment.mute, rate: 1.0, loop: true})
+            environment.music.bgm1.play({seek: environment.seek});
+        }
+        title.enter = this.sound.add('se-enter', {mute: environment.mute});
 //        this.audio.music.bgm1.stop();
         touchField = this.add.sprite(0, 0, "title-bg").setOrigin(0 ,0);
         title.bgobj = this.add.sprite(320, 200, "title-bgobj").setAlpha(0);
@@ -48,7 +51,8 @@ var Title = new Phaser.Class({
             ease: 'Sine.easeInOut',
             yoyo: true
         })
-        this.add.sprite(320, 50, "title-logo");
+//        this.add.sprite(320, 50, "title-logo");
+        this.add.sprite(320, 60, "title-logo");
         title.touchText = this.add.sprite(320, 220, "title-touch").setAlpha(0);
         this.tweens.add({
             targets: title.touchText,
@@ -59,42 +63,68 @@ var Title = new Phaser.Class({
             yoyo: true
         })
         this.add.sprite(480, 360, "title-credit");
+        this.add.text(5, 1, "HI-Score: " + String(environment.hiscore).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,'), {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            align: 'right',
+            stroke: '#000000',
+            strokeThickness: 3,
+        }).setOrigin(0,0);
+
+        title.rankText = this.add.text(10, 21, "", {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            align: 'right',
+            stroke: '#000000',
+            strokeThickness: 3,
+        }).setOrigin(0,0);
+
+        if (environment.hiscore != 0) {
+//            environment.rank = getRank(environment.hiscore);
+            getRank(environment.hiscore);
+        }
+
+        title.mutebtn = this.add.sprite(36, 350, 'title-mute', environment.mute ? 1 : 0);
+        title.fullscreenbtn = this.add.sprite(240, 365, 'title-fullscreen');
+
         this.cameras.main.fadeIn(700)
         .on('camerafadeincomplete', function() {
+            
+            title.mutebtn.setInteractive().on('pointerdown', function(pointer, localX, localY, event){
+                if (!environment.mute) {
+                    title.mutebtn.setFrame(1);
+                    environment.mute = true;
+                    environment.music.bgm1.mute = true;
+                    title.enter.mute = true;
+                    $.cookie('audio-mute', true, { expires: 365*3});
+                }
+                else {
+                    title.mutebtn.setFrame(0);
+                    environment.mute = false;
+                    environment.music.bgm1.mute = false;
+                    title.enter.mute = false;
+                    $.cookie('audio-mute', false, { expires: 365*3});
+                }
+            }, this);
+            
+            title.fullscreenbtn.setInteractive().on('pointerdown', function(pointer, localX, localY, event){
+                this.scale.toggleFullscreen();
+            }, this);
             touchField.setInteractive().on('pointerdown', function(pointer, localX, localY, event){
                 title.enter.play();
                 this.cameras.main.fadeOut(300)
                 .on('camerafadeoutcomplete', function() {
                     environment.seek = environment.music.bgm1.seek;
-//                    this.audio.music.bgm1.stop();
                     this.scene.start('mainscene');
                 }, this);
             }, this);
         }, this);
-//        this.audio.music.bgm1.stop();
-//        this.scene.start('mainscene');
-/*
-        function() {
-            touchField.setInteractive().on('pointerdown', function(pointer, localX, localY, event){
-                if (!flag) {
-                    flag = true;
-                    this.cameras.main.fadeOut(700, 0, 0, 0, function() {
-                        environment.seek = environment.music.bgm1.seek;
-                        environment.music.bgm1.stop();
-                        this.scene.start('mainscene');
-                    });
-                }
-            }, this);
-        }, this);
-        */
-/*
-        this.input.on('pointerdown', function(){
-            console.log(this.scene);
-            this.scene.start('mainscene');
-        });
-        */
-        console.log('Title Created');
-        console.log(this.canvas);
-//        this.scene.start('mainscene');
+    },
+    update: function() {
+        if (environment.hiscore != 0) {
+            title.rankText.text = String(environment.rank).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,') + "位！";
+        }
     }
 });

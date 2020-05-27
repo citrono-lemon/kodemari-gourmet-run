@@ -4,13 +4,15 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <title>KODEMARI GOURMET RUN !!</title>
-  <meta name="description" content="はらぺこコデマリが食べ物を食べつくすゲームです">
-  <meta name=”author” content=”レモン工房と開発室”>
-
-
-  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <title>コデマリグルメラン！</title>
+  <meta name="description" content="いつでも腹ペコな花騎士(フラワーナイト)のコデマリが、ひたすら走り、食べ物を食べつくす！">
+  <meta name="author" content="レモン工房と開発室">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:site" content="@lemonkobo">
+  <meta name="og:title" content="コデマリグルメラン！">
+  <meta name="og:description" content="いつでも腹ペコな花騎士(フラワーナイト)のコデマリが、ひたすら走り、食べ物を食べつくす！[スマホ向け]">
+  <meta name="og:image" content="https://game.lemonkobo.com/kodemari-gourmet-run/tw-card.png">
+  <link rel="icon" href="favicon.ico">
   <style>
   * {
     padding: 0;
@@ -22,8 +24,24 @@
     margin: 0 auto;
   }
   </style>
+  <!-- 当サイトではGoogleによるアクセス解析ツールを使用しております。 -->
+  <!-- 詳細は https://lemonkobo.com/privacy-policy をご覧ください。 -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-148352815-1"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-148352815-1');
+  </script>
+
 </head>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.19.0/phaser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <!--
   <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
   <script src="https://pixijs.download/v5.1.1/pixi.min.js"></script>
@@ -38,18 +56,59 @@
 <body>
     <script>
     let cell = {s: 32, xLen: 20, yLen: 12};
-    let environment = {seek: 1, music: {}};
+    let environment = {seek: 1.5, music: {volume: 0.4}, mute: $.cookie('audio-mute') != null ? ($.cookie('audio-mute') == 'true' ? true : false) : false, hiscore: $.cookie('hiscore') != null ? $.cookie('hiscore') : 0};
 //    let game = {w: cell.s * cell.xLen, h: cell.s * cell.yLen};
+    let postScore = function(score, itemscore) {
+      console.log("Score Post");
+      $.ajax({
+        type: 'POST',
+        url: 'scorepost.php',
+        async: false,
+        data: {
+          'score': score,
+          'itemscore': itemscore,
+        }
+      }).done(function(data, textStatus, jqXHR){
+        return data;
+        // スコア送るだけで
+      }).fail(function(jqXHR, textStatus, errorThrown){
+        console.log(jqXHR);
+        console.log(textStatus);
+        return -1;
+      });
+    }
+
+    let getRank = function(score) { 
+      $.ajax({
+        type: 'POST',
+        url: 'hiscore.php',
+        async: false,
+        data: {
+        'score': score,
+        }
+      }).done(function(data, textStatus, jqXHR){
+        environment.rank = data;
+        return data;
+        // スコア送るだけで
+      }).fail(function(jqXHR, textStatus, errorThrown){
+        console.log(jqXHR);
+        console.log(textStatus);
+        return -1;
+      });
+    }
+
+
 
     let config = {
         type: Phaser.AUTO,
-        gameTitle: "SUPER KODEMARI GOURMET RUN !!",
+        gameTitle: "コデマリグルメラン！",
         gameURL: "https://lemonkobo.com/g/kodemari-run/",
         width: cell.s * cell.xLen,      // 概ね640
         height: cell.s * cell.yLen,     // 差し詰め384
         scale: {
             mode: Phaser.Scale.FIT,
-            autoCenter: Phaser.Scale.CENTER_BOTH
+            autoCenter: Phaser.Scale.CENTER_BOTH,
+            orientation: Phaser.Scale.Orientation.PORTRAIT
         },
         antialias: false,
         physics: {
@@ -59,19 +118,6 @@
                 debug: false
             }
         },
-        /*
-        pack: {
-            files: [
-                { type: 'scenePlugin', key: 'SpinePlugin', url: 'plugins/SpinePlugin.js', sceneKey: 'spine' }
-            ]
-        },
-        */
-        plugins: {
-          scene: [
-            { key: 'SpinePlugin', plugin: window.SpinePlugin, mapping: 'spine' }
-          ]
-        },
-//        plugins: { scene: [ { key: 'SpineWebGLPlugin', plugin: SpineWebGLPlugin, start: true, sceneKey: 'spine' } ] },
         scene: [ Preloader, Title, MainScene ]
     };
 
